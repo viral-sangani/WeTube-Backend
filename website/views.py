@@ -10,7 +10,7 @@ from website.models import Channel, Video
 from slugify import slugify
 import datetime
 
-url = 'http://localhost:8000'
+url = 'https://8jx1h4z1ra.execute-api.ap-south-1.amazonaws.com/dev/'
 
 
 def pretty_date(time):
@@ -72,7 +72,7 @@ def createVideoList(videoList):
             'videoChannelName': item.videoChannel.channelName,
             'videoChannelSlug': item.videoChannel.channelSlug,
             'videoDescription': item.videoDescription,
-            'videoChannelImage': url + item.videoChannel.channelImage.url,
+            'videoChannelImage': item.videoChannel.channelImage.url,
             'videoUploadTime': pretty_date(item.videoUploadTime.replace(tzinfo=None))
 
         })
@@ -116,7 +116,7 @@ class userChannel(APIView):
                 channelObj = Channel.objects.get(channelCreatedBy=request.user)
                 resObj.update({
                     "channelName": channelObj.channelName,
-                    "channelImage": url + channelObj.channelImage.url,
+                    "channelImage": channelObj.channelImage.url,
                     "channelCreateTime": channelObj.channelCreateTime,
                     "channelUpdateTime": channelObj.channelUpdateTime,
                     "channelAbout": channelObj.channelAbout,
@@ -209,7 +209,7 @@ class getVideoById(APIView):
             'videoChannelName': item.videoChannel.channelName,
             'videoChannelSlug': item.videoChannel.channelSlug,
             'viodeChannelSubs': item.videoChannel.channelTotalSub,
-            'videoChannelImage': url + item.videoChannel.channelImage.url,
+            'videoChannelImage': item.videoChannel.channelImage.url,
             'videoUploadTime': pretty_date(item.videoUploadTime.replace(tzinfo=None)),
             'videoList': createVideoList(videoList),
         }
@@ -322,7 +322,7 @@ class allChannel(APIView):
             res_list.append({
                 "channelName": item.channelName,
                 "channelSlug": item.channelSlug,
-                "channelImage": url + item.channelImage.url
+                "channelImage": item.channelImage.url
             })
         return Response(res_list)
 
@@ -344,7 +344,7 @@ class historyVideo(APIView):
                 'videoChannelName': item.videoChannel.channelName,
                 'videoChannelSlug': item.videoChannel.channelSlug,
                 'videoDescription': item.videoDescription,
-                'videoChannelImage': url + item.videoChannel.channelImage.url,
+                'videoChannelImage': item.videoChannel.channelImage.url,
                 'videoUploadTime': pretty_date(item.videoUploadTime.replace(tzinfo=None))
             })
         return Response(res_list)
@@ -367,7 +367,7 @@ class likedVideos(APIView):
                 'videoChannelName': item.videoChannel.channelName,
                 'videoChannelSlug': item.videoChannel.channelSlug,
                 'videoDescription': item.videoDescription,
-                'videoChannelImage': url + item.videoChannel.channelImage.url,
+                'videoChannelImage': item.videoChannel.channelImage.url,
                 'videoUploadTime': pretty_date(item.videoUploadTime.replace(tzinfo=None))
             })
         return Response(res_list)
@@ -385,7 +385,7 @@ class getChannel(APIView):
         channelObj = Channel.objects.get(channelSlug=slug)
         res_dict = {
             "channelName": channelObj.channelName,
-            "channelImage": url + channelObj.channelImage.url,
+            "channelImage": channelObj.channelImage.url,
             "channelCreateTime": channelObj.channelCreateTime,
             "channelUpdateTime": channelObj.channelUpdateTime,
             "channelAbout": channelObj.channelAbout,

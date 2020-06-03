@@ -7,3 +7,5 @@ python-dotenv
 djangorestframework-jwt
 psycopg2-binary
 slugify
+boto3
+django-storages
