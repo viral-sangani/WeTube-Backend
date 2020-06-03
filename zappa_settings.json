@@ -1,0 +1,10 @@
+{
+  "dev": {
+    "aws_region": "ap-south-1",
+    "django_settings": "django_backend.settings",
+    "profile_name": "default",
+    "project_name": "wetube-backend",
+    "runtime": "python3.6",
+    "s3_bucket": "wetube-backend"
+  }
+}
