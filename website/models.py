@@ -67,6 +67,7 @@ class Video(models.Model):
     videoLikedBy = JSONField(default=default)
     videoDislikedBy = JSONField(default=default)
     videoComment = JSONField(default=default)
+    algolia_id = models.CharField(_("Algolia ID"), max_length=50)
 
     def __str__(self):
         return self.videoName

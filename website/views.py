@@ -9,8 +9,15 @@ from .serializers import UserSerializer, UserSerializerWithToken
 from website.models import Channel, Video
 from slugify import slugify
 import datetime
+from algoliasearch.search_client import SearchClient
+from django.conf import settings
 
-url = 'https://8jx1h4z1ra.execute-api.ap-south-1.amazonaws.com/dev/'
+url = 'http://localhost:8000/'
+# url = 'https://8jx1h4z1ra.execute-api.ap-south-1.amazonaws.com/dev/'
+# https://www.algolia.com/doc/api-reference/widgets/hits/react/
+
+client = SearchClient.create(settings.ALGOLIA_ID, settings.ALGOLIA_API)
+index = client.init_index('wetube')
 
 
 def pretty_date(time):
@@ -55,6 +62,28 @@ def pretty_date(time):
     if day_diff < 365:
         return str(int(day_diff / 30)) + " months ago"
     return str(int(day_diff / 365)) + " years ago"
+
+
+def algoliaVideoUpload(videoObj):
+    attr = {
+        'videoId': videoObj.pk,
+        'videoName': videoObj.videoName,
+        'videoSlug': videoObj.videoSlug,
+        'videoLink': videoObj.videoLink,
+        'videoThumbnail': videoObj.videoThumbnail,
+        'videoTotalViews': videoObj.videoTotalViews,
+        'videoTotalLikes': videoObj.videoTotalLikes,
+        'videoTotalDislikes': videoObj.videoTotalDislikes,
+        'videoChannelName': videoObj.videoChannel.channelName,
+        'videoChannelSlug': videoObj.videoChannel.channelSlug,
+        'videoDescription': videoObj.videoDescription,
+        'videoChannelImage': videoObj.videoChannel.channelImage.url,
+        'videoUploadTime': pretty_date(videoObj.videoUploadTime.replace(tzinfo=None))
+    }
+    res = index.save_objects(
+        [attr], {'autoGenerateObjectIDIfNotExist': True})
+    videoObj.algolia_id = res[0]['objectIDs'][0]
+    videoObj.save()
 
 
 def createVideoList(videoList):
@@ -146,7 +175,19 @@ class createChannel(APIView):
                 request.user.hasChannel = True
                 request.user.channelObj = channelObj
                 request.user.save()
-                return Response({'succes': True})
+                videoObj = Video.objects.filter(videoChannel=channelObj)
+                videoList = createVideoList(videoObj)
+                resObj = {
+                    "hasChannel": request.user.hasChannel,
+                    "channelName": channelObj.channelName,
+                    "channelImage": channelObj.channelImage.url,
+                    "channelCreateTime": channelObj.channelCreateTime,
+                    "channelUpdateTime": channelObj.channelUpdateTime,
+                    "channelAbout": channelObj.channelAbout,
+                    "channelTotalSub": channelObj.channelTotalSub,
+                    "videoList": videoList
+                }
+                return Response(resObj)
             else:
                 return Response({'Error': 'This Accound has a Channel.'})
         else:
@@ -161,10 +202,11 @@ class uploadVideo(APIView):
             videoObj.videoName = request.data.get('videoName', "N/A")
             videoObj.videoSlug = slugify(request.data.get('videoName', "N/A"))
             videoObj.videoLink = url
-            videoObj.videoThumbnail = "https://i.ytimg.com/vi/" + url[url.index("=")+1:] + "/maxresdefault.jpg"
+            videoObj.videoThumbnail = "https://i.ytimg.com/vi/" + url[url.index("=") + 1:] + "/maxresdefault.jpg"
             videoObj.videoDescription = request.data.get('videoDescription', "N/A")
             videoObj.videoChannel = Channel.objects.get(channelCreatedBy=request.user)
             videoObj.save()
+            algoliaVideoUpload(videoObj)
             return Response({'success': True})
         else:
             return Response({'Error': 'Please Login in access this.'})
@@ -175,8 +217,19 @@ class getVideos(APIView):
         videoObj = Video.objects.all().order_by('-videoUploadTime')
         res_list = []
         res_list = createVideoList(videoObj)
-
         return Response(res_list)
+
+
+class search(APIView):
+    def get(self, request):
+        searchWord = request.GET.get('s', '')
+        if searchWord == "undefined":
+            return Response({'empty': True})
+        algolia_data = index.search(searchWord)
+        res = algolia_data['hits']
+        if not res:
+            return Response({'empty': True})
+        return Response(res)
 
 
 class getVideoById(APIView):
@@ -246,17 +299,14 @@ class likeVideo(APIView):
         if request.user.pk not in item.videoLikedBy:
             item.videoLikedBy.append(request.user.pk)
             item.videoTotalLikes += 1
-            print("like +")
             if request.user.pk in item.videoDislikedBy:
                 item.videoDislikedBy.remove(request.user.pk)
                 item.videoTotalDislikes -= 1
-                print("dislike -")
         else:
             item.videoLikedBy.remove(request.user.pk)
             item.videoTotalLikes -= 1
-            print("like -")
 
-        ## Dislike
+        # Dislike
         if slug in request.user.likedVideo:
             request.user.likedVideo.remove(slug)
         else:
@@ -273,15 +323,12 @@ class dislikeVideo(APIView):
         if request.user.pk not in item.videoDislikedBy:
             item.videoDislikedBy.append(request.user.pk)
             item.videoTotalDislikes += 1
-            print("dislike +")
             if request.user.pk in item.videoLikedBy:
                 item.videoLikedBy.remove(request.user.pk)
                 item.videoTotalLikes -= 1
-                print("like -")
         else:
             item.videoDislikedBy.remove(request.user.pk)
             item.videoTotalDislikes -= 1
-            print("dislike -")
         item.save()
         request.user.save()
         request.user.likedVideo.append(slug)

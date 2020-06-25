@@ -1,5 +1,5 @@
 from django.urls import path
-from website.views import getChannel, trendingVideos, likedVideos, historyVideo, allChannel, subscribeChanel, commentVideo, dislikeVideo, likeVideo, current_user, UserList, userChannel, createChannel, getVideos, getVideoById, uploadVideo, getRecommendedVideos
+from website.views import search, getChannel, trendingVideos, likedVideos, historyVideo, allChannel, subscribeChanel, commentVideo, dislikeVideo, likeVideo, current_user, UserList, userChannel, createChannel, getVideos, getVideoById, uploadVideo, getRecommendedVideos
 
 urlpatterns = [
     path('current_user/', current_user),
@@ -21,5 +21,7 @@ urlpatterns = [
 
     path('channel/subscribe/<slug:slug>/', subscribeChanel.as_view()),
     path('channels/', allChannel.as_view()),
-    path('channels/<slug:slug>/', getChannel.as_view())
+    path('channels/<slug:slug>/', getChannel.as_view()),
+
+    path('search/', search.as_view())
 ]

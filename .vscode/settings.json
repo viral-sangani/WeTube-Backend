@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/viral-sangani/Desktop/Projects/MeTube/venv/bin/python",
+    "python.pythonPath": "venv/bin/python",
     "git.ignoreLimitWarning": true,
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true
